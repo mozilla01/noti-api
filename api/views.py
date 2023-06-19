@@ -2,7 +2,10 @@ from django.shortcuts import render
 from .models import Note
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import NoteSerializer
+from .serializers import NoteSerializer, UserSerializer
+from django.contrib.auth.models import User
+from django.contrib import auth
+
 
 # Create your views here.
 
@@ -64,3 +67,32 @@ def deleteNote(request, pk):
     note.delete()
 
     return Response("Object deleted successfully")
+
+
+@api_view(["POST"])
+def createUser(request):
+    serializer = UserSerializer(data=request.data)
+
+    if serializer.is_valid():
+        username = request.GET["username"]
+        password = request.GET["password"]
+        email = request.GET["email"]
+        if User.objects.filter(username=username).exists():
+            return Response("Username already exists")
+        else:
+            serializer.save()
+            return Response("User created successfully")
+    else:
+        return Response("Invalid data")
+
+
+@api_view(["POST"])
+def loginUser(request):
+    user = auth.authenticate(
+        username=request.get["username"], password=request.get["password"]
+    )
+    if user is not None:
+        auth.login(user)
+        return Response(user)
+    else:
+        return Response("Invalid credentials")

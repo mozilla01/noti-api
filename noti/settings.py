@@ -59,6 +59,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:4173",
     "http://127.0.0.1:8000",
     "http://192.168.0.104:5173",
+    "http://192.168.0.105:5173",
 ]
 
 ROOT_URLCONF = "noti.urls"
