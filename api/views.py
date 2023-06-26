@@ -5,9 +5,24 @@ from rest_framework.response import Response
 from .serializers import NoteSerializer, UserSerializer
 from django.contrib.auth.models import User
 from django.contrib import auth
+from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
-# Create your views here.
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token["username"] = user.username
+
+        return token
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 
 @api_view(["GET"])
@@ -18,17 +33,18 @@ def apiOverview(request):
         "Create": "/note-create/",
         "Update": "/note-update/<str:pk>/",
         "Delete": "/note-delete/<str:pk>/",
+        "Create user": "/create-user/",
+        "Login user": "/login-user/",
     }
 
     return Response(api_urls)
 
 
-@api_view(["GET"])
-def noteList(request):
-    notes = Note.objects.all()
-    serializer = NoteSerializer(notes, many=True)
-
-    return Response(serializer.data)
+class noteList(APIView):
+    def get(self, request, pk, Format=None):
+        notes = Note.objects.filter(user=pk)
+        serializer = NoteSerializer(notes, many=True)
+        return Response(serializer.data)
 
 
 @api_view(["GET"])
@@ -39,15 +55,12 @@ def noteDetail(request, pk):
     return Response(serializer.data)
 
 
-@api_view(["POST"])
-def createNote(request):
-    serializer = NoteSerializer(data=request.data)
-    print(request.data)
-
-    if serializer.is_valid():
-        serializer.save()
-
-    return Response(serializer.data)
+class createNote(APIView):
+    def post(self, request, Format=None):
+        serializer = NoteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        return Response(serializer.data)
 
 
 @api_view(["POST"])
@@ -71,28 +84,20 @@ def deleteNote(request, pk):
 
 @api_view(["POST"])
 def createUser(request):
-    serializer = UserSerializer(data=request.data)
-
-    if serializer.is_valid():
-        username = request.GET["username"]
-        password = request.GET["password"]
-        email = request.GET["email"]
-        if User.objects.filter(username=username).exists():
-            return Response("Username already exists")
-        else:
-            serializer.save()
-            return Response("User created successfully")
+    serializer = UserSerializer(request.data)
+    username = serializer.data.get("username")
+    password = serializer.data.get("password")
+    email = serializer.data.get("email")
+    print(username, email, password)
+    if (
+        User.objects.filter(username=username).exists()
+        or User.objects.filter(email=email).exists()
+    ):
+        return Response(data="Username or email already exists", status=400)
     else:
-        return Response("Invalid data")
-
-
-@api_view(["POST"])
-def loginUser(request):
-    user = auth.authenticate(
-        username=request.get["username"], password=request.get["password"]
-    )
-    if user is not None:
-        auth.login(user)
-        return Response(user)
-    else:
-        return Response("Invalid credentials")
+        user = User.objects.create_user(
+            username=username, password=password, email=email
+        )
+        user.save()
+        auth.login(request, user)
+        return Response("User created successfully")
