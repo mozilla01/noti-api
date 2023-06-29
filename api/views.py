@@ -8,6 +8,8 @@ from django.contrib import auth
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -41,6 +43,8 @@ def apiOverview(request):
 
 
 class noteList(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, pk, Format=None):
         notes = Note.objects.filter(user=pk)
         serializer = NoteSerializer(notes, many=True)
