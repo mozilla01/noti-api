@@ -67,6 +67,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.0.104:5173",
     "http://192.168.0.104:4173",
     "http://192.168.0.105:4173",
+    "https://noti-notes.netlify.app/",
 ]
 
 
