@@ -16,6 +16,10 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -61,6 +65,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://127.0.0.1:4173",
     "http://192.168.0.104:5173",
+    "http://192.168.0.104:4173",
     "http://192.168.0.105:4173",
 ]
 
@@ -89,19 +94,24 @@ WSGI_APPLICATION = "noti.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-f = open("./noti/.postgres", "r")
-pwd = f.read()
-f.close()
+# f = open("./noti/.postgres", "r")
+# pwd = f.read()
+# f.close()
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "Notes",
-        "USER": "postgres",
-        "PASSWORD": pwd,
-        "HOST": "localhost",
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "Notes",
+#         "USER": "postgres",
+#         "PASSWORD": pwd,
+#         "HOST": "localhost",
+#     }
+# }
+
+# Render PostgreSQL configuration
+import dj_database_url
+
+DATABASES = {"default": dj_database_url.parse(env("DATABASE_URL"))}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -111,7 +121,7 @@ REST_FRAMEWORK = {
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
